@@ -189,6 +189,29 @@ void mzd_row_add(mzd_t *M, rci_t sourcerow, rci_t destrow) {
   mzd_row_add_offset(M, destrow, sourcerow, 0);
 }
 
+void mzd_xor_row(mzd_t *B, rci_t i, mzd_t const *A, rci_t j) {
+  assert(B->ncols >= A->ncols);
+  wi_t const width = MIN(B->width, A->width) - 1;
+
+  word const *a = mzd_row_const(A, j);
+  word *b       = mzd_row(B, i);
+
+  word const mask_end = __M4RI_LEFT_BITMASK(A->ncols % m4ri_radix);
+
+  if (width != 0) {
+    for (wi_t k = 0; k < width; ++k) {
+      b[k] ^= a[k]; // XOR operation instead of copy
+    }
+    b[width] ^= (a[width] & mask_end);
+
+  } else {
+    b[0] ^= (a[0] & mask_end);
+  }
+
+  __M4RI_DD_ROW(B, i);
+}
+
+
 void mzd_row_clear_offset(mzd_t *M, rci_t row, rci_t coloffset) {
   wi_t const startblock = coloffset / m4ri_radix;
   word temp;
